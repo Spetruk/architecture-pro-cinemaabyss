@@ -1,31 +1,21 @@
-FROM golang:1.23-alpine AS builder
+# Dockerfile
+FROM python:3.9-slim
 
 WORKDIR /app
 
-# Copy go mod and sum files
-COPY go.mod ./
+# Установка зависимостей
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Download all dependencies
-RUN go mod download
-
-# Copy the source code
+# Копирование исходного кода
 COPY . .
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o events-service .
+# Определение переменных окружения по умолчанию
+ENV PORT=8082
+ENV KAFKA_BROKERS=kafka:9092
 
-# Use a smaller image for the final application
-FROM alpine:latest  
-
-RUN apk --no-cache add ca-certificates
-
-WORKDIR /root/
-
-# Copy the binary from builder
-COPY --from=builder /app/events-service .
-
-# Expose the application port
+# Порт для приложения
 EXPOSE 8082
 
-# Command to run the executable
-CMD ["./events-service"]
+# Команда запуска
+CMD ["python", "app.py"]
