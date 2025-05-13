@@ -1,0 +1,69 @@
+@startuml "Кинобездна - To-Be архитектура (C4 контейнеры)"
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+' Определение стилей
+AddElementTag("microservice", $bgColor="#23A8E2", $fontColor="white")
+AddElementTag("database", $shape=Cylinder(), $bgColor="#438DD5", $fontColor="white")
+AddElementTag("queue", $bgColor="#5F43D5", $fontColor="white")
+AddElementTag("storage", $shape=Cylinder(), $bgColor="#D59F43", $fontColor="white")
+AddElementTag("external", $shape=RoundedBoxShape(), $bgColor="#8A8A8A", $fontColor="white")
+
+' Основные компоненты
+
+Person(user, "Пользователь", "Пользователь сервиса")
+
+System_Boundary(kino_boundary, "Система 'Кинобездна'") {
+    ' Основные контейнеры
+    Container(api_gateway, "API Gateway", "Nginx, Kong", "Единая точка входа для всех клиентов, маршрутизация, балансировка нагрузки", $tags = "microservice")
+
+    ContainerQueue(kafka, "Message Broker", "Kafka", "Асинхронная коммуникация между сервисами", $tags = "queue")
+
+    Container(auth_service, "Auth Service", "Go", "Управление пользователями, аутентификация и авторизация", $tags = "microservice")
+    Container(movies_service, "Movies Service", "Go", "Управление видео-контентом, интеграция с внешними стриминговыми сервисами", $tags = "microservice")
+    Container(metadata_service, "Metadata Service", "Go", "Управление метаданными фильмов (жанры, актеры, оценки)", $tags = "microservice")
+    Container(payment_service, "Payment Service", "Go", "Управление платежами, подписками, скидками", $tags = "microservice")
+    Container(preferences_service, "User Preferences Service", "Go", "Управление избранным контентом и оценками пользователей", $tags = "microservice")
+
+    ' Инфраструктурные компоненты
+    ContainerDb(auth_db, "Auth Database", "PostgreSQL", "Хранение данных пользователей", $tags = "database")
+    ContainerDb(movies_db, "Movies Database", "PostgreSQL", "Хранение информации о контенте", $tags = "database")
+    ContainerDb(metadata_db, "Metadata Database", "PostgreSQL", "Хранение метаданных о фильмах", $tags = "database")
+    ContainerDb(payment_db, "Payment Database", "PostgreSQL", "Хранение данных о платежах и подписках", $tags = "database")
+    ContainerDb(preferences_db, "Preferences Database", "PostgreSQL", "Хранение пользовательских предпочтений", $tags = "database")
+
+    Container(s3, "Object Storage", "S3-compatible", "Хранение объектных данных", $tags = "storage")
+}
+
+System_Ext(payment_system, "Платежная система", "Внешняя система для обработки платежей")
+System_Ext(recommendation_system, "Рекомендательная система", "Внешняя система для формирования рекомендаций", $tags = "external")
+System_Ext(external_content, "Внешние источники контента", "Другие стриминговые сервисы и открытые источники", $tags = "external")
+
+' Отношения между компонентами
+Rel(user, api_gateway, "Использует", "HTTPS")
+
+Rel(api_gateway, auth_service, "Маршрутизирует запросы аутентификации", "REST/JSON")
+Rel(api_gateway, movies_service, "Маршрутизирует запросы контента", "REST/JSON")
+Rel(api_gateway, metadata_service, "Маршрутизирует запросы метаданных", "REST/JSON")
+Rel(api_gateway, payment_service, "Маршрутизирует платежные запросы", "REST/JSON")
+Rel(api_gateway, preferences_service, "Маршрутизирует запросы предпочтений", "REST/JSON")
+
+Rel(auth_service, auth_db, "Читает/Записывает", "SQL")
+Rel(movies_service, movies_db, "Читает/Записывает", "SQL")
+Rel(metadata_service, metadata_db, "Читает/Записывает", "SQL")
+Rel(payment_service, payment_db, "Читает/Записывает", "SQL")
+Rel(preferences_service, preferences_db, "Читает/Записывает", "SQL")
+
+Rel(auth_service, kafka, "Публикует события", "Async")
+Rel(movies_service, kafka, "Публикует/Потребляет события", "Async")
+Rel(metadata_service, kafka, "Публикует/Потребляет события", "Async")
+Rel(payment_service, kafka, "Публикует события", "Async")
+Rel(preferences_service, kafka, "Подписывается на события", "Async")
+
+Rel(movies_service, s3, "Хранит/Получает объекты", "API")
+Rel(movies_service, external_content, "Получает контент", "API")
+Rel(payment_service, payment_system, "Обрабатывает платежи", "API")
+Rel(movies_service, recommendation_system, "Получает рекомендации", "API")
+
+
+@enduml
