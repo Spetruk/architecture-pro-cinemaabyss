@@ -279,6 +279,10 @@ cat .docker/config.json | base64
 1) вывода при вызове https://cinemaabyss.example.com/api/movies;
 2) вывода event-service после тестов.
 
+![get-movies](screenshots/get-movies.png)
+
+![events-service-after-tests](screenshots/events-service.png)
+
 
 # Задание 4
 Чтобы в будущем упростить обновление и развертывание архитектуры, вам нужно создать Helm-чарты для прокси-сервиса и проверить их работу.
