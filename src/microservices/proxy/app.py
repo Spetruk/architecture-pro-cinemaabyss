@@ -57,10 +57,6 @@ def forward_request(target_url, path=None, strip_api_prefix=False):
     if not request_path.startswith('/'):
         request_path = '/' + request_path
 
-    # Удаляем префикс /api если нужно
-    if strip_api_prefix and request_path.startswith('/api'):
-        request_path = request_path[4:]  # Удаляем '/api'
-        logger.info(f"Stripped /api prefix, new path: {request_path}")
 
     # Формирование полного URL для запроса
     url = urljoin(target_url, request_path)
