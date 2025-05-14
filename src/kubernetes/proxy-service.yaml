@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: proxy-service
-          image: ghcr.io/Spetruk/architecture-pro-cinemaabyss/proxy-service:latest
+          image: ghcr.io/spetruk/architecture-pro-cinemaabyss/proxy-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
@@ -36,9 +36,9 @@ spec:
             - name: EVENTS_SERVICE_URL
               value: "http://events-service:8082"
             - name: GRADUAL_MIGRATION
-              value: "true"
+              value: $(GRADUAL_MIGRATION)
             - name: MOVIES_MIGRATION_PERCENT
-              value: "50"
+              value: $(MOVIES_MIGRATION_PERCENT)
 
           envFrom:
             - configMapRef:
@@ -52,8 +52,6 @@ spec:
             requests:
               cpu: "100m"
               memory: "128Mi"
-
-#         ЧТО ДЕЛАТЬ С ЭТИМ?
           readinessProbe:
             httpGet:
               path: /health

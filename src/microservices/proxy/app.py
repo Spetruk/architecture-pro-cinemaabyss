@@ -3,7 +3,7 @@ import random
 import logging
 import requests
 from flask import Flask, request, Response, jsonify
-from urllib.parse import urljoin, quote  # Используем quote вместо url_quote
+from urllib.parse import urljoin, quote
 import os
 
 # Настройка логирования
@@ -35,6 +35,7 @@ logger.info(f"Starting proxy service on port {PORT}")
 logger.info(f"Monolith URL: {MONOLITH_URL}")
 logger.info(f"Movies Service URL: {MOVIES_SERVICE_URL}")
 logger.info(f"Events Service URL: {EVENTS_SERVICE_URL}")
+
 logger.info(f"Gradual Migration: {GRADUAL_MIGRATION}")
 logger.info(f"Movies Migration Percent: {MOVIES_MIGRATION_PERCENT}%")
 
@@ -56,6 +57,11 @@ def forward_request(target_url, path=None, strip_api_prefix=False):
     if not request_path.startswith('/'):
         request_path = '/' + request_path
 
+    # Удаляем префикс /api если нужно
+    if strip_api_prefix and request_path.startswith('/api'):
+        request_path = request_path[4:]  # Удаляем '/api'
+        logger.info(f"Stripped /api prefix, new path: {request_path}")
+
     # Формирование полного URL для запроса
     url = urljoin(target_url, request_path)
 
@@ -65,6 +71,8 @@ def forward_request(target_url, path=None, strip_api_prefix=False):
 
     # Логирование перенаправления
     logger.info(f"Forwarding {request_method} request to: {url}")
+    logger.info(f"Request data: {request.get_data()}")
+    logger.info(f"Request content type: {request.content_type}")
 
     try:
         # Формирование и отправка запроса
@@ -94,8 +102,8 @@ def forward_request(target_url, path=None, strip_api_prefix=False):
         logger.error(f"Error forwarding request to {url}: {e}")
         return jsonify({"error": f"Proxy error: {str(e)}"}), 500
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
+@app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'])
+@app.route('/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'])
 def proxy(path):
     """
     Обрабатывает все входящие запросы и перенаправляет их на соответствующие сервисы
