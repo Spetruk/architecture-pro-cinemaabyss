@@ -1,6 +1,6 @@
 {
-  "id": "local-env",
-  "name": "Local Environment",
+  "id": "kubernetes-env",
+  "name": "Kubernetes Environment",
   "values": [
     {
       "key": "baseUrl",

@@ -1,4 +1,3 @@
-# Dockerfile
 FROM python:3.9-slim
 
 WORKDIR /app
@@ -11,11 +10,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Определение переменных окружения по умолчанию
-ENV PORT=8082
-ENV KAFKA_BROKERS=kafka:9092
+ENV PORT=8000
+ENV MONOLITH_URL=http://monolith:8080
+ENV MOVIES_SERVICE_URL=http://movies-service:8081
+ENV EVENTS_SERVICE_URL=http://events-service:8082
+ENV GRADUAL_MIGRATION=true
+ENV MOVIES_MIGRATION_PERCENT=50
 
-# Порт для приложения
-EXPOSE 8082
+EXPOSE 8000
 
-# Команда запуска
+# Запуск приложения
 CMD ["python", "app.py"]

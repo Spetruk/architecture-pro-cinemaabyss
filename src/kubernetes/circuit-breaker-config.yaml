@@ -1,0 +1,79 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: monolith-circuit-breaker
+spec:
+  host: monolith
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100 # Maximum number of TCP connections
+        connectTimeout: 30ms
+      http:
+        maxRequestsPerConnection: 10
+        http1MaxPendingRequests: 1
+        maxRetries: 3
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+    loadBalancer:
+      simple: ROUND_ROBIN
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: movies-service-circuit-breaker
+spec:
+  host: movies-service
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+        connectTimeout: 30ms
+      http:
+        maxRequestsPerConnection: 10
+        http1MaxPendingRequests: 1
+        maxRetries: 3
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 100
+    loadBalancer:
+      simple: ROUND_ROBIN
+---
+# VirtualService for Monolith to define retry policies
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: monolith-vs
+spec:
+  hosts:
+    - monolith
+  http:
+    - route:
+        - destination:
+            host: monolith
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream
+---
+# VirtualService for Movies Service to define retry policies
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: movies-service-vs
+spec:
+  hosts:
+    - movies-service
+  http:
+    - route:
+        - destination:
+            host: movies-service
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream
